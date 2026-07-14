@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Contador Agent
 
-## Getting Started
+Assistente virtual para um escritório de contabilidade, construído com [Next.js](https://nextjs.org) e [Mastra](https://mastra.ai). O agente responde dúvidas sobre prazos de declaração de imposto de renda, documentos necessários e horário de atendimento.
 
-First, run the development server:
+## Pré-requisitos
+
+- [Node.js](https://nodejs.org) 20+
+- [pnpm](https://pnpm.io) (o projeto usa `pnpm-lock.yaml`)
+- Uma chave de API da OpenAI (o agente usa o modelo `openai/gpt-5.5`)
+
+## Configuração
+
+1. Instale as dependências:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Copie o arquivo de variáveis de ambiente e preencha sua chave da OpenAI:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   ```
+   OPENAI_API_KEY=sua-chave-aqui
+   ```
+
+## Rodando o projeto
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no navegador. A partir dali, acesse [http://localhost:3000/chat](http://localhost:3000/chat) para conversar com o assistente.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Outros comandos disponíveis:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm build   # build de produção
+pnpm start   # roda o build de produção
+pnpm lint    # checagem de lint
+```
 
-## Learn More
+## Estrutura do projeto
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── page.tsx              # página inicial
+│   ├── chat/page.tsx         # tela de chat com o assistente
+│   └── api/chat/route.ts     # endpoint que conecta o front ao agente Mastra
+├── components/ui/            # componentes de UI (shadcn)
+├── lib/                      # utilitários
+└── mastra/
+    ├── index.ts              # instância principal do Mastra
+    └── agents/
+        └── contador-agent.ts # definição do agente (instruções, modelo)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Como funciona a conversa
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+O chat usa o hook `useChat` (AI SDK) no cliente, que mantém o histórico da conversa em memória no navegador e o reenvia a cada mensagem para `/api/chat`. Esse endpoint repassa as mensagens para o `contadorAgent` via `handleChatStream` e transmite a resposta de volta em streaming.
 
-## Deploy on Vercel
+Esse histórico não é persistido em banco de dados — ele existe apenas enquanto a página do navegador está aberta. Para adicionar memória persistente entre sessões, é necessário configurar `@mastra/memory` com um storage provider e associá-lo ao agente em `src/mastra/agents/contador-agent.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Personalizando o agente
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+As instruções, regras de resposta e modelo do assistente ficam em [src/mastra/agents/contador-agent.ts](src/mastra/agents/contador-agent.ts). Edite o campo `instructions` para ajustar o comportamento do assistente.
